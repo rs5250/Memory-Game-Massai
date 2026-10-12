@@ -8,11 +8,37 @@
         /* Reset default styles and set up CSS custom properties for theming */
         :root {
             --primary-color: #2196f3;
+            --primary-hover: #1565c0;
+            --primary-active: #0d47a1;
             --background-color: #f5f5f5;
+            --panel-background: #ffffff;
+            --panel-border: rgba(0, 0, 0, 0.08);
             --card-back: #1976d2;
             --card-front: #ffffff;
+            --card-front-text: #1f2933;
             --text-color: #333333;
+            --muted-text: #5a6472;
             --success-color: #4caf50;
+            --button-text: #ffffff;
+            --overlay-color: rgba(0, 0, 0, 0.5);
+            --shadow-color: rgba(0, 0, 0, 0.12);
+        }
+
+        body[data-theme="dark"] {
+            --primary-color: #64b5f6;
+            --primary-hover: #42a5f5;
+            --primary-active: #90caf9;
+            --background-color: #111827;
+            --panel-background: #1f2937;
+            --panel-border: rgba(148, 163, 184, 0.25);
+            --card-back: #2d4b6e;
+            --card-front: #243244;
+            --card-front-text: #e5edf7;
+            --text-color: #e5e7eb;
+            --muted-text: #cbd5e1;
+            --button-text: #08131e;
+            --overlay-color: rgba(2, 6, 23, 0.7);
+            --shadow-color: rgba(0, 0, 0, 0.35);
         }
 
         * {
@@ -29,6 +55,7 @@
             line-height: 1.6;
             padding: 20px;
             min-height: 100vh;
+            transition: background-color 0.2s ease, color 0.2s ease;
         }
 
         /* Main container with max-width for larger screens */
@@ -48,21 +75,31 @@
             margin-bottom: 0.5rem;
         }
 
+        .header p {
+            color: var(--muted-text);
+        }
+
         /* Game controls and statistics panel */
         .controls {
             display: flex;
             justify-content: space-around;
             flex-wrap: wrap;
             gap: 1rem;
-            background: white;
+            background: var(--panel-background);
             padding: 1rem;
             border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            border: 1px solid var(--panel-border);
+            box-shadow: 0 2px 4px var(--shadow-color);
             margin-bottom: 2rem;
         }
 
         .stat {
             text-align: center;
+        }
+
+        .stat h2 {
+            font-size: 1.05rem;
+            color: var(--muted-text);
         }
 
         .stat-value {
@@ -72,7 +109,11 @@
 
         /* Grid size selector styles */
         .grid-selector {
-            text-align: center;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 0.75rem;
             margin-bottom: 2rem;
         }
 
@@ -81,18 +122,26 @@
             border: none;
             border-radius: 4px;
             background: var(--primary-color);
-            color: white;
+            color: var(--button-text);
             cursor: pointer;
             font-size: 1rem;
-            transition: background-color 0.3s ease;
+            transition: background-color 0.3s ease, transform 0.2s ease;
         }
 
         button:hover {
-            background-color: #1565c0;
+            background-color: var(--primary-hover);
+        }
+
+        button:active {
+            transform: translateY(1px);
         }
 
         button.active {
-            background-color: #0d47a1;
+            background-color: var(--primary-active);
+        }
+
+        .theme-toggle {
+            min-width: 150px;
         }
 
         /* Game grid styles with responsive layout */
@@ -146,17 +195,19 @@
             align-items: center;
             justify-content: center;
             font-size: 2rem;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            border: 1px solid var(--panel-border);
+            box-shadow: 0 2px 4px var(--shadow-color);
         }
 
         .card-front {
             background: var(--card-front);
+            color: var(--card-front-text);
             transform: rotateY(180deg);
         }
 
         .card-back {
             background: var(--card-back);
-            color: white;
+            color: var(--button-text);
         }
 
         /* Win modal styles */
@@ -167,15 +218,18 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0,0,0,0.5);
+            background: var(--overlay-color);
             justify-content: center;
             align-items: center;
         }
 
         .modal-content {
-            background: white;
+            background: var(--panel-background);
+            color: var(--text-color);
             padding: 2rem;
             border-radius: 8px;
+            border: 1px solid var(--panel-border);
+            box-shadow: 0 4px 12px var(--shadow-color);
             text-align: center;
             max-width: 400px;
             width: 90%;
@@ -190,7 +244,9 @@
         .scores-list {
             max-width: 600px;
             margin: 1rem auto;
-            background: white;
+            background: var(--panel-background);
+            color: var(--text-color);
+            border: 1px solid var(--panel-border);
             padding: 1rem;
             border-radius: 8px;
         }
@@ -240,6 +296,7 @@
         <div class="grid-selector">
             <button class="grid-btn active" data-size="4">4x4 Grid</button>
             <button class="grid-btn" data-size="6">6x6 Grid</button>
+            <button class="theme-toggle" type="button" aria-label="Toggle dark mode" aria-pressed="false">🌙 Dark Mode</button>
         </div>
 
         <!-- Game grid -->
@@ -286,8 +343,35 @@
             modal: document.querySelector('.modal'),
             finalStats: document.querySelector('.final-stats'),
             gridButtons: document.querySelectorAll('.grid-btn'),
-            scoresList: document.querySelector('.scores-list')
+            scoresList: document.querySelector('.scores-list'),
+            themeToggle: document.querySelector('.theme-toggle')
         };
+
+        function getStoredTheme() {
+            try {
+                return localStorage.getItem('memoryGameTheme');
+            } catch (error) {
+                return null;
+            }
+        }
+
+        function applyTheme(theme) {
+            const nextTheme = theme === 'dark' ? 'dark' : 'light';
+            document.body.setAttribute('data-theme', nextTheme);
+
+            if (elements.themeToggle) {
+                const isDark = nextTheme === 'dark';
+                elements.themeToggle.textContent = isDark ? '☀️ Light Mode' : '🌙 Dark Mode';
+                elements.themeToggle.setAttribute('aria-pressed', String(isDark));
+                elements.themeToggle.setAttribute('aria-label', isDark ? 'Switch to light mode' : 'Switch to dark mode');
+            }
+
+            try {
+                localStorage.setItem('memoryGameTheme', nextTheme);
+            } catch (error) {
+                // Ignore storage failures gracefully to keep gameplay working.
+            }
+        }
 
         // Card symbols (emojis) for both grid sizes
         const symbols = {
@@ -482,6 +566,13 @@
             }
         });
 
+        if (elements.themeToggle) {
+            elements.themeToggle.addEventListener('click', () => {
+                const currentTheme = document.body.getAttribute('data-theme') || 'light';
+                applyTheme(currentTheme === 'dark' ? 'light' : 'dark');
+            });
+        }
+
         document.querySelector('.play-again').addEventListener('click', () => {
             elements.modal.style.display = 'none';
             initializeGrid();
@@ -499,6 +590,9 @@
         });
 
         // Initialize game
+        const savedTheme = getStoredTheme();
+        const preferredTheme = savedTheme || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+        applyTheme(preferredTheme);
         updateScoresList();
         initializeGrid();
     </script>
